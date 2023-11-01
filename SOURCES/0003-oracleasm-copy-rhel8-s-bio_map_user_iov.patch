@@ -1,0 +1,130 @@
+From 29ee0198fc5acc9647f8d9a97f0e07bb8a278aa7 Mon Sep 17 00:00:00 2001
+From: Ming Lei <ming.lei@redhat.com>
+Date: Wed, 16 Sep 2020 11:08:42 +0800
+Subject: [PATCH 3/3] oracleasm: copy rhel8's bio_map_user_iov
+
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/block/oracleasm/driver.c | 99 +++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 98 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/block/oracleasm/driver.c b/drivers/block/oracleasm/driver.c
+index 756d3f9..c726726 100644
+--- a/drivers/block/oracleasm/driver.c
++++ b/drivers/block/oracleasm/driver.c
+@@ -1124,6 +1124,103 @@ static void asm_end_bio_io(struct bio *bio)
+ 	}
+ }  /* asm_end_bio_io() */
+ 
++/**
++ *	asm_bio_map_user_iov - map user iovec into bio
++ *	@q:		the struct request_queue for the bio
++ *	@iter:		iovec iterator
++ *	@gfp_mask:	memory allocation flags
++ *
++ *	Map the user space address into a bio suitable for io to a block
++ *	device. Returns an error pointer in case of error.
++ */
++static struct bio *asm_bio_map_user_iov(struct request_queue *q,
++			     struct iov_iter *iter,
++			     gfp_t gfp_mask)
++{
++	int j;
++	struct bio *bio;
++	int ret;
++	struct bio_vec *bvec;
++
++	if (!iov_iter_count(iter))
++		return ERR_PTR(-EINVAL);
++
++	bio = bio_kmalloc(gfp_mask, iov_iter_npages(iter, BIO_MAX_PAGES));
++	if (!bio)
++		return ERR_PTR(-ENOMEM);
++
++	while (iov_iter_count(iter)) {
++		struct page **pages;
++		ssize_t bytes;
++		size_t offs, added = 0;
++		int npages;
++
++		bytes = iov_iter_get_pages_alloc(iter, &pages, LONG_MAX, &offs);
++		if (unlikely(bytes <= 0)) {
++			ret = bytes ? bytes : -EFAULT;
++			goto out_unmap;
++		}
++
++		npages = DIV_ROUND_UP(offs + bytes, PAGE_SIZE);
++
++		if (unlikely(offs & queue_dma_alignment(q))) {
++			ret = -EINVAL;
++			j = 0;
++		} else {
++			for (j = 0; j < npages; j++) {
++				struct page *page = pages[j];
++				unsigned int n = PAGE_SIZE - offs;
++				unsigned short prev_bi_vcnt = bio->bi_vcnt;
++
++				if (n > bytes)
++					n = bytes;
++
++				if (!bio_add_pc_page(q, bio, page, n, offs))
++					break;
++
++				/*
++				 * check if vector was merged with previous
++				 * drop page reference if needed
++				 */
++				if (bio->bi_vcnt == prev_bi_vcnt)
++					put_page(page);
++
++				added += n;
++				bytes -= n;
++				offs = 0;
++			}
++			iov_iter_advance(iter, added);
++		}
++		/*
++		 * release the pages we didn't map into the bio, if any
++		 */
++		while (j < npages)
++			put_page(pages[j++]);
++		kvfree(pages);
++		/* couldn't stuff something into bio? */
++		if (bytes)
++			break;
++	}
++
++	bio_set_flag(bio, BIO_USER_MAPPED);
++
++	/*
++	 * subtle -- if asm_bio_map_user_iov() ended up bouncing a bio,
++	 * it would normally disappear when its bi_end_io is run.
++	 * however, we need it for the unmap, so grab an extra
++	 * reference to it
++	 */
++	bio_get(bio);
++	return bio;
++
++ out_unmap:
++	bio_for_each_segment_all(bvec, bio, j) {
++		put_page(bvec->bv_page);
++	}
++	bio_put(bio);
++	return ERR_PTR(ret);
++}
++
+ static int asm_submit_io(struct file *file,
+ 			 asm_ioc __user *user_iocp,
+ 			 asm_ioc *ioc)
+@@ -1247,7 +1344,7 @@ static int asm_submit_io(struct file *file,
+ 	iov.iov_base = (void __user *)ioc->buffer_asm_ioc;
+ 	iov.iov_len = r->r_count;
+ 	iov_iter_init(&iter, rw, &iov, 1, r->r_count);
+-	r->r_bio = bio_map_user_iov(bdev_get_queue(bdev), &iter, GFP_KERNEL);
++	r->r_bio = asm_bio_map_user_iov(bdev_get_queue(bdev), &iter, GFP_KERNEL);
+ 
+ 	if (IS_ERR(r->r_bio)) {
+ 		ret = PTR_ERR(r->r_bio);
+-- 
+2.13.6
+
