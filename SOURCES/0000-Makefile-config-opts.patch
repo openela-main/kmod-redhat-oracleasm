@@ -1,0 +1,9 @@
+Index: src/drivers/block/oracleasm/Makefile
+===================================================================
+--- src.orig/drivers/block/oracleasm/Makefile	2019-02-07 00:10:13.442236591 +0100
++++ src/drivers/block/oracleasm/Makefile	2019-02-07 00:30:59.117388865 +0100
+@@ -1,3 +1,4 @@
++CONFIG_ORACLEASM = m
+ 
+ obj-$(CONFIG_ORACLEASM) := oracleasm.o
+ oracleasm-y += driver.o transaction_file.o
