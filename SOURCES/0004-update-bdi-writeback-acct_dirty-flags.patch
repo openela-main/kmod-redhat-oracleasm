@@ -1,0 +1,19 @@
+Commit kernel-4.18.0-361.el8~13^2~6 ("bdi: replace
+BDI_CAP_NO_{WRITEBACK,ACCT_DIRTY} with a single flag", upstream commit
+f56753ac2a90) has changed the semantics of bdi->capabilities without
+any oracleasm-tangible kABI effect (by virtue of being a change of macro
+values;  the accompying function change has not have any effect as oracleasm
+kmod doesn't utilise any of them).  Update the capabilities value to a new one.
+Index: oracleasm-redhat-2.0.8/drivers/block/oracleasm/driver.c
+===================================================================
+--- oracleasm-redhat-2.0.8.orig/drivers/block/oracleasm/driver.c	2022-02-21 22:04:43.375816985 +0100
++++ oracleasm-redhat-2.0.8/drivers/block/oracleasm/driver.c	2022-02-21 22:05:36.277381843 +0100
+@@ -726,7 +726,7 @@
+ 		struct backing_dev_info *bdi = inode_to_bdi(inode);
+ 
+ 		bdi->ra_pages = 0;	/* No readahead */
+-		bdi->capabilities = BDI_CAP_NO_ACCT_DIRTY | BDI_CAP_NO_WRITEBACK;
++		bdi->capabilities = 0;
+ 
+ 		BUG_ON(atomic_read(&d->d_ios) != 0);
+ 		BUG_ON(d->d_live);

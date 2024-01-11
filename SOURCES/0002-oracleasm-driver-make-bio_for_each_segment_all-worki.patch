@@ -1,0 +1,30 @@
+From 7035e448d799d95a70a0231c53b03e3e82c242ea Mon Sep 17 00:00:00 2001
+From: Ming Lei <ming.lei@redhat.com>
+Date: Wed, 16 Sep 2020 12:09:01 +0800
+Subject: [PATCH 2/3] oracleasm: driver: make bio_for_each_segment_all working
+ on rhel8
+
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/block/oracleasm/driver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/block/oracleasm/driver.c b/drivers/block/oracleasm/driver.c
+index 7844036..756d3f9 100644
+--- a/drivers/block/oracleasm/driver.c
++++ b/drivers/block/oracleasm/driver.c
+@@ -145,9 +145,9 @@ static inline unsigned int asm_block_size(struct block_device *bdev)
+ void asm_bio_unmap(struct bio *bio)
+ {
+ 	struct bio_vec *bvec;
+-	struct bvec_iter_all iter_all;
++	int i;
+ 
+-	bio_for_each_segment_all(bvec, bio, iter_all) {
++	bio_for_each_segment_all(bvec, bio, i) {
+ 		if (bio_data_dir(bio) == READ)
+ 			set_page_dirty_lock(bvec->bv_page);
+ 
+-- 
+2.13.6
+
