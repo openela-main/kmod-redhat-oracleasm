@@ -3,9 +3,9 @@
 %define kmod_rpm_name		kmod-redhat-oracleasm
 %define kmod_driver_version	2.0.8
 %define kmod_driver_epoch	8
-%define kmod_rpm_release	17
-%define kmod_kernel_version	4.18.0-444.el8
-%define kmod_kernel_version_min	4.18.0-444.el8
+%define kmod_rpm_release	18
+%define kmod_kernel_version	4.18.0-507.el8
+%define kmod_kernel_version_min	4.18.0-507.el8
 %define kmod_kernel_version_dep	4.18.0
 %define kmod_kbuild_dir		drivers/block/oracleasm
 %define kmod_install_path	extra/kmod-redhat-oracleasm
@@ -219,6 +219,9 @@ install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/%{kmod_rpm_n
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Wed Jan 04 2023 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-18
+- Rebuild against kernel-4.18.0-507.el8 (#2228579).
+
 * Wed Jan 04 2023 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-17
 - Rebuild against kernel-4.18.0-444.el8 (#2148239).
 
