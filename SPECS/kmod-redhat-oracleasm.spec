@@ -3,9 +3,9 @@
 %define kmod_rpm_name		kmod-redhat-oracleasm
 %define kmod_driver_version	2.0.8
 %define kmod_driver_epoch	8
-%define kmod_rpm_release	18
-%define kmod_kernel_version	4.18.0-507.el8
-%define kmod_kernel_version_min	4.18.0-507.el8
+%define kmod_rpm_release	18.1
+%define kmod_kernel_version	4.18.0-552%{dist}
+%define kmod_kernel_version_min	4.18.0-552%{dist}
 %define kmod_kernel_version_dep	4.18.0
 %define kmod_kbuild_dir		drivers/block/oracleasm
 %define kmod_install_path	extra/kmod-redhat-oracleasm
@@ -13,7 +13,6 @@
 %define kernel_devel_pkg	kernel-devel
 %define kernel_modules_pkg	kernel-modules
 
-%{!?dist: %define dist .el8_4}
 %{!?make_build: %define make_build make}
 
 %if "%{kmod_kernel_version_dep}" == ""
@@ -28,6 +27,7 @@ Patch0:	0000-Makefile-config-opts.patch
 Patch2:	0002-oracleasm-driver-make-bio_for_each_segment_all-worki.patch
 Patch3:	0003-oracleasm-copy-rhel8-s-bio_map_user_iov.patch
 Patch4:	0004-update-bdi-writeback-acct_dirty-flags.patch
+Patch5:	0005-oracleasm-Access-d_bdev-before-dropping-inode.patch
 
 %define findpat %( echo "%""P" )
 %define __find_requires /usr/lib/rpm/redhat/find-requires.ksyms
@@ -157,6 +157,7 @@ exit 0
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 set -- *
 mkdir source
 mv "$@" source/
@@ -219,6 +220,9 @@ install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/%{kmod_rpm_n
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Mon Apr 08 2024 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-18.1
+- Fix use-after-free in asmfs_svc_query_handle (RHEL-30468).
+
 * Wed Jan 04 2023 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-18
 - Rebuild against kernel-4.18.0-507.el8 (#2228579).
 
