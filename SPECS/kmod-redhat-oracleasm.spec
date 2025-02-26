@@ -3,9 +3,9 @@
 %define kmod_rpm_name		kmod-redhat-oracleasm
 %define kmod_driver_version	2.0.8
 %define kmod_driver_epoch	8
-%define kmod_rpm_release	18.1
-%define kmod_kernel_version	4.18.0-552%{dist}
-%define kmod_kernel_version_min	4.18.0-552%{dist}
+%define kmod_rpm_release	18.2
+%define kmod_kernel_version	4.18.0-553.el8_10
+%define kmod_kernel_version_min	4.18.0-553.el8_10
 %define kmod_kernel_version_dep	4.18.0
 %define kmod_kbuild_dir		drivers/block/oracleasm
 %define kmod_install_path	extra/kmod-redhat-oracleasm
@@ -67,6 +67,8 @@ Requires:	kernel >= 4.18.0-240.el8
 Conflicts:	kmod-%{kmod_name}
 Obsoletes:	%{name}-kernel_4_18_0_240
 Obsoletes:	%{name}-kernel_4_18_0_240_14_1
+Obsoletes:	%{name}-kernel_4_18_0_305
+Obsoletes:	%{name}-kernel_4_18_0_305_146_1
 Obsoletes:	%{name}-kernel_4_18_0_425_3_1
 Obsoletes:	%{name}-kernel_4_18_0_425_10_1
 
@@ -220,6 +222,10 @@ install -m 644 -D source/greylist.txt $RPM_BUILD_ROOT/usr/share/doc/%{kmod_rpm_n
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+* Tue Jan 21 2025 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-18.2
+- Add Obsoletes: tags for 8.4.z kernel-specific sub-packages (RHEL-76082).
+- Rebuild against kernel-4.18.0-553.el8_10.
+
 * Mon Apr 08 2024 Eugene Syromiatnikov <esyr@redhat.com> 2.0.8-18.1
 - Fix use-after-free in asmfs_svc_query_handle (RHEL-30468).
 
